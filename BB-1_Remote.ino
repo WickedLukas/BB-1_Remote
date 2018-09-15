@@ -12,25 +12,22 @@ const uint16_t VR_X_MAX = 1023;
 const uint16_t VR_Y_MIN = 0;
 const uint16_t VR_Y_MAX = 1023;
 
-// joystick neutral
-const uint8_t NEUTRAL = 128;
-
 // measured joystick neutral
 const uint16_t VR_X_NEUTRAL = 520;
 const uint16_t VR_Y_NEUTRAL = 512;
-
-// joystick neutral offsets
-const int32_t VR_X_OFFSET = NEUTRAL - VR_X_NEUTRAL;
-const int32_t VR_Y_OFFSET = NEUTRAL - VR_Y_NEUTRAL;
-
-//String message; // string that stores the incoming message
 
 // Arduino pin numbers
 #define VR_X_PIN A0 // analog pin connected to joystick VRx
 #define VR_Y_PIN A1 // analog pin connected to joystick VRy
 
+// Orders for communication
+#define HELLO_BB1 'B'
+#define HELLO_BB1_REMOTE 'R'
+#define VELOCITY 'V'
+#define CONTROL 'C'
+
 // get calibrated, mapped and constrained joystick data
-void joystick_update(uint8_t& x, uint8_t& y);
+void joystick_update(int8_t& x, int8_t& y);
 
 // NOTE! Enabling DEBUG adds about 3.3kB to the flash program size.
 // Debug output is now working even on ATMega328P MCUs (e.g. Arduino Uno)
@@ -58,87 +55,63 @@ void setup() {
 
 void loop() {
 	// calibrated, mapped and constrained joystick data
-	static uint8_t x;
-	static uint8_t y;
+	static int8_t x;
+	static int8_t y;
 	
-	// specifies the requested data from BB-1
-	static char dataRequest;
+	// Order received from BB-1
+	static char receivedOrder;
 	
+	// get calibrated, mapped and constrained joystick measurements
 	joystick_update(x, y);
 	
 	// check for BB1 data request
-	if (Serial1.available()) {
-		// clear serial input buffer if it contains more than one char and use last char in this case
-		while (Serial1.available()) {	
-			dataRequest = Serial1.read();
-		}
+	if (Serial1.available() > 0) {
+		receivedOrder = Serial1.read();
 		
-		switch (dataRequest) {
-			case 'j':			// send requested joystick data
-				Serial1.print('j'); Serial1.print(x); Serial1.print(','); Serial1.print(y);
-				DEBUG_PRINT('j'); DEBUG_PRINT(x); DEBUG_PRINT(','); DEBUG_PRINT(y);
+		switch (receivedOrder) {
+			case HELLO_BB1_REMOTE:
+				// send confirmation for established communication
+				Serial1.print(HELLO_BB1);
+				DEBUG_PRINT(HELLO_BB1);
 				break;
-			case 'c':			// send requested control data
+			case VELOCITY:
+				// send requested joystick data
+				Serial1.print('<'); Serial1.print(VELOCITY); Serial1.print(','); Serial1.print(x); Serial1.print(','); Serial1.print(y); Serial1.print('>');
+				DEBUG_PRINT('<'); DEBUG_PRINT(VELOCITY); DEBUG_PRINT(','); DEBUG_PRINT(x); DEBUG_PRINT(','); DEBUG_PRINT(y); DEBUG_PRINTLN('>');
+				break;
+			case CONTROL:
+				// send requested control data
 				break;
 			default:
-				DEBUG_PRINT("Received unknown char.");
+				DEBUG_PRINT("Received unknown order: ");
+				DEBUG_PRINTLN(receivedOrder);
 		}
 	}
-	
-	/*
-	DEBUG_PRINT("X-axis: ");
-	DEBUG_PRINT(x);
-	DEBUG_PRINT("\n");
-	DEBUG_PRINT("Y-axis: ");
-	DEBUG_PRINTLN(y);
-	DEBUG_PRINT("\n\n");
-	delay(500);
-	*/
-	
-	/*
-	// while there is data available on serial1
-	while(Serial1.available()) {
-	message+=char(Serial1.read());	//store string from serial command
-	}
-	
-	if(!Serial1.available()) {
-	// if data was received
-	if(message!="") {
-	// show data
-	Serial.println(message);
-	// clear data
-	message="";
-	}
-	}
-	
-	delay(1000);	//delay
-	*/
-
 }
 
 // get calibrated, mapped and constrained joystick measurements
-void joystick_update(uint8_t& x, uint8_t& y) {
+void joystick_update(int8_t& x, int8_t& y) {
 	// joystick measurements
 	static uint16_t vr_x;
 	static uint16_t vr_y;
 	
-	// read joystick measurements
+	// read joystick values
 	vr_x = analogRead(VR_X_PIN);
 	//vr_y = analogRead(VR_Y_PIN);
 	
-	// calibrate, map and constrain joystick measurements
+	// calibrate, map and constrain joystick values
 	if (vr_x <= VR_X_NEUTRAL) {
-		x = constrain(map(vr_x + VR_X_OFFSET, VR_X_MIN + VR_X_OFFSET, VR_X_NEUTRAL + VR_X_OFFSET, 0, NEUTRAL), 0, NEUTRAL);
+		x = constrain(map(vr_x, VR_X_MIN, VR_X_NEUTRAL, -128, 0), -128, 0);
 	}
 	else {
-		x = constrain(map(vr_x + VR_X_OFFSET, VR_X_NEUTRAL + VR_X_OFFSET, VR_X_MAX + VR_X_OFFSET, NEUTRAL, 255), NEUTRAL, 255);
+		x = constrain(map(vr_x, VR_X_NEUTRAL, VR_X_MAX, 0, 127), 0, 127);
 	}
 
 	if (vr_y <= VR_Y_NEUTRAL) {
-		y = constrain(map(vr_y + VR_Y_OFFSET, VR_Y_MIN + VR_Y_OFFSET, VR_Y_NEUTRAL + VR_Y_OFFSET, 0, NEUTRAL), 0, NEUTRAL);
+		y = constrain(map(vr_y, VR_Y_MIN, VR_Y_NEUTRAL, -128, 0), -128, 0);
 	}
 	else {
-		y = constrain(map(vr_y + VR_Y_OFFSET, VR_Y_NEUTRAL + VR_Y_OFFSET, VR_Y_MAX + VR_Y_OFFSET, NEUTRAL, 255), NEUTRAL, 255);
+		y = constrain(map(vr_y, VR_Y_NEUTRAL, VR_Y_MAX, 0, 127), 0, 127);
 	}
 }
 
