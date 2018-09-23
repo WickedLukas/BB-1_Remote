@@ -13,7 +13,7 @@ const uint16_t VR_Y_MIN = 0;
 const uint16_t VR_Y_MAX = 1023;
 
 // measured joystick neutral
-const uint16_t VR_X_NEUTRAL = 520;
+const uint16_t VR_X_NEUTRAL = 512;
 const uint16_t VR_Y_NEUTRAL = 512;
 
 // Arduino pin numbers
@@ -33,7 +33,7 @@ void joystick_update(int8_t& x, int8_t& y);
 // Debug output is now working even on ATMega328P MCUs (e.g. Arduino Uno)
 // after moving string constants to flash memory storage using the F()
 // compiler macro (Arduino IDE 1.0+ required).
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINT(x) Serial.print(x)
@@ -45,8 +45,10 @@ void joystick_update(int8_t& x, int8_t& y);
 
 void setup() {
 	// initialize serial communication
+	#ifdef DEBUG
 	Serial.begin(115200);
 	while (!Serial); // wait for Leonardo eNUMeration, others continue immediately
+	#endif
 	
 	// initialize serial1 communication
 	Serial1.begin(115200);
@@ -97,7 +99,7 @@ void joystick_update(int8_t& x, int8_t& y) {
 	
 	// read joystick values
 	vr_x = analogRead(VR_X_PIN);
-	//vr_y = analogRead(VR_Y_PIN);
+	vr_y = analogRead(VR_Y_PIN);
 	
 	// calibrate, map and constrain joystick values
 	if (vr_x <= VR_X_NEUTRAL) {
