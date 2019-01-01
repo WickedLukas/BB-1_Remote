@@ -6,27 +6,30 @@
 *
 */
 
-// measured joystick limits
+// joystick limits
 const uint16_t VR_X_MIN = 0;
 const uint16_t VR_X_MAX = 1023;
 const uint16_t VR_Y_MIN = 0;
 const uint16_t VR_Y_MAX = 1023;
 
-// measured joystick neutral
+// joystick neutral
 const uint16_t VR_X_NEUTRAL = 512;
 const uint16_t VR_Y_NEUTRAL = 512;
 
-// Arduino pin numbers
+// joystick tolerance: Lower values will cause unreliable zero position and minimum/maximum not being reached. Higher values will decrease joystick resolution.
+const uint8_t TOLERANCE = 10;
+
+// joystick pins
 #define VR_X_PIN A0 // analog pin connected to joystick VRx
 #define VR_Y_PIN A1 // analog pin connected to joystick VRy
 
-// Orders for communication
+// orders for communication
 #define HELLO_BB1 'B'
 #define HELLO_BB1_REMOTE 'R'
 #define VELOCITY 'V'
 #define CONTROL 'C'
 
-// get calibrated, mapped and constrained joystick data
+// get mapped and constrained joystick data
 void joystick_update(int8_t& x, int8_t& y);
 
 // NOTE! Enabling DEBUG adds about 3.3kB to the flash program size.
@@ -91,29 +94,28 @@ void loop() {
 	}
 }
 
-// get calibrated, mapped and constrained joystick measurements
+// get joystick values
 void joystick_update(int8_t& x, int8_t& y) {
 	// joystick measurements
 	static uint16_t vr_x;
 	static uint16_t vr_y;
 	
-	// read joystick values
+	// get joystick measurements
 	vr_x = analogRead(VR_X_PIN);
 	vr_y = analogRead(VR_Y_PIN);
 	
-	// calibrate, map and constrain joystick values
+	// map and constrain joystick measurements
 	if (vr_x <= VR_X_NEUTRAL) {
-		x = constrain(map(vr_x, VR_X_MIN, VR_X_NEUTRAL, -128, 0), -128, 0);
+		x = constrain(map(vr_x, VR_X_MIN, VR_X_NEUTRAL, -128 - TOLERANCE, TOLERANCE), -128, 0);
 	}
 	else {
-		x = constrain(map(vr_x, VR_X_NEUTRAL, VR_X_MAX, 0, 127), 0, 127);
+		x = constrain(map(vr_x, VR_X_NEUTRAL, VR_X_MAX, -TOLERANCE, 127 + TOLERANCE), 0, 127);
 	}
 
 	if (vr_y <= VR_Y_NEUTRAL) {
-		y = constrain(map(vr_y, VR_Y_MIN, VR_Y_NEUTRAL, -128, 0), -128, 0);
+		y = constrain(map(vr_y, VR_Y_MIN, VR_Y_NEUTRAL, -128 - TOLERANCE, TOLERANCE), -128, 0);
 	}
 	else {
-		y = constrain(map(vr_y, VR_Y_NEUTRAL, VR_Y_MAX, 0, 127), 0, 127);
+		y = constrain(map(vr_y, VR_Y_NEUTRAL, VR_Y_MAX, -TOLERANCE, 127 + TOLERANCE), 0, 127);
 	}
 }
-
