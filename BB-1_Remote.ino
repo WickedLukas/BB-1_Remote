@@ -106,14 +106,14 @@ void joystick_update(int8_t& x, int8_t& y) {
 	
 	// map and constrain joystick measurements
 	if (vr_x <= VR_X_NEUTRAL) {
-		x = constrain(map(vr_x, VR_X_MIN, VR_X_NEUTRAL, -128 - TOLERANCE, TOLERANCE), -128, 0);
+		x = constrain(map(vr_x, VR_X_MIN, VR_X_NEUTRAL, -127 - TOLERANCE, TOLERANCE), -127, 0);
 	}
 	else {
 		x = constrain(map(vr_x, VR_X_NEUTRAL, VR_X_MAX, -TOLERANCE, 127 + TOLERANCE), 0, 127);
 	}
 
 	if (vr_y <= VR_Y_NEUTRAL) {
-		y = constrain(map(vr_y, VR_Y_MIN, VR_Y_NEUTRAL, -128 - TOLERANCE, TOLERANCE), -128, 0);
+		y = constrain(map(vr_y, VR_Y_MIN, VR_Y_NEUTRAL, -127 - TOLERANCE, TOLERANCE), -127, 0);
 	}
 	else {
 		y = constrain(map(vr_y, VR_Y_NEUTRAL, VR_Y_MAX, -TOLERANCE, 127 + TOLERANCE), 0, 127);
