@@ -6,6 +6,8 @@
 *
 */
 
+#include <Arduino.h>
+
 // joystick limits
 const uint16_t VR_X_MIN = 0;
 const uint16_t VR_X_MAX = 1023;
